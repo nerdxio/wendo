@@ -4,19 +4,16 @@ import app.wendo.security.JwtService;
 import app.wendo.users.dtos.AuthenticationRequest;
 import app.wendo.users.dtos.AuthenticationResponse;
 import app.wendo.users.dtos.RegisterRequest;
+import app.wendo.users.models.Role;
 import app.wendo.users.models.User;
 import app.wendo.users.repositories.UserRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
@@ -27,13 +24,13 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
-    public AuthenticationResponse register(RegisterRequest request) {
+    public AuthenticationResponse register(RegisterRequest request, Role role) {
 
         var user = User.builder()
                 .fullName(request.getFullName())
                 .phoneNumber(request.getPhoneNumber())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(request.getRole())
+                .role(role)
                 .build();
 
         var savedUser = repository.save(user);
@@ -64,9 +61,7 @@ public class AuthenticationService {
                 .build();
     }
 
-    public AuthenticationResponse refreshToken(
-            HttpServletRequest request
-    ) {
+    public AuthenticationResponse refreshToken(HttpServletRequest request) {
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         final String refreshToken, userEmail;
 
