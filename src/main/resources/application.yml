@@ -14,10 +14,22 @@ spring:
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
+  ##### File Upload Configuration #####
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+##### JWT Configuration #####
 application:
   security:
     jwt:
       secret-key: 403E631266556A586E2272357538782F413F4428472B4B6250645367566B5970
-      expiration: 604800000 # 7 day
+      expiration: 2592000000 # 30 day
       refresh-token:
-        expiration: 604800000 # 7 days
+        expiration: 2592000000 # 30 days
+
+##### APP Configuration #####
+app:
+  base-url: http://localhost:8080
+  upload-dir: /home/nerd/uploads

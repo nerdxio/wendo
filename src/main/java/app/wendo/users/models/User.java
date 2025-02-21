@@ -1,6 +1,7 @@
 package app.wendo.users.models;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,6 +10,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.List;
 
 @Data
 @Builder
@@ -32,6 +34,16 @@ public class User implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<UserImage> userImages;
+
+    @Email
+    private String email;
+
+    private boolean isOnline;
+    @Column(name = "profile_image_url")
+    private String profileImageUrl;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
