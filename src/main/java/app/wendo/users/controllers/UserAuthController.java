@@ -1,6 +1,5 @@
 package app.wendo.users.controllers;
 
-import app.wendo.files.FilesService;
 import app.wendo.users.dtos.AuthenticationRequest;
 import app.wendo.users.dtos.AuthenticationResponse;
 import app.wendo.users.dtos.RegisterRequest;
@@ -8,6 +7,9 @@ import app.wendo.users.models.Role;
 import app.wendo.users.services.AuthenticationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +24,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserAuthController {
 
     private final AuthenticationService service;
-    private final FilesService filesService;
 
     @PostMapping("/register/passenger")
     public ResponseEntity<AuthenticationResponse> registerAsPassenger(@RequestBody RegisterRequest request) {
@@ -51,9 +52,9 @@ public class UserAuthController {
     @PostMapping("/complete-registration/passenger")
     public void completeRegistrationPassengerDocuments(
             @Email @RequestParam String email,
-            @RequestParam("profilePicture") MultipartFile profilePicture,
-            @RequestParam("idFrontPicture") MultipartFile idFrontPicture,
-            @RequestParam("idBackPicture") MultipartFile idBackPicture
+            @NotNull @RequestParam("profilePicture") MultipartFile profilePicture,
+            @NotNull @RequestParam("idFrontPicture") MultipartFile idFrontPicture,
+            @NotNull @RequestParam("idBackPicture") MultipartFile idBackPicture
     ) {
         service.completeRegistrationPassengerDocuments(
                 email,
@@ -64,25 +65,49 @@ public class UserAuthController {
     }
 
     @PostMapping("/complete-registration/driver/documents")
-    public ResponseEntity<String> completeRegistrationDriverDocuments(
-            @RequestParam String email,
-//            @RequestParam String cartLineNumber,
-//            @RequestParam String carType,
-            @RequestParam("profilePicture") MultipartFile profilePicture
-//            @RequestParam("frontLicensePicture") MultipartFile frontLicensePicture,
-//            @RequestParam("backLicensePicture") MultipartFile backLicensePicture,
-//            @RequestParam("carPicture") MultipartFile carPicture
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void completeRegistrationDriverDocuments(
+            @Email @RequestParam String email,
+            @RequestParam("profilePicture") MultipartFile profilePicture,
+            @RequestParam("idFrontPicture") MultipartFile idFrontPicture,
+            @RequestParam("idBackPicture") MultipartFile idBackPicture,
+            @RequestParam("driverLicenseFront") MultipartFile driverLicenseFront,
+            @RequestParam("driverLicenseBack") MultipartFile driverLicenseBack,
+            @NotBlank @RequestParam("dataOfBrith") String dataOfBrith
     ) {
-
-        return ResponseEntity.ok(service.completeRegistration(profilePicture));
+        service.completeRegistrationDriverDocuments(
+                email,
+                profilePicture,
+                idFrontPicture,
+                idBackPicture,
+                driverLicenseFront,
+                driverLicenseBack,
+                dataOfBrith
+        );
     }
 
-
-    @PostMapping("/complete-registration/driver/car-images")
-    public ResponseEntity<String> completeRegistrationCarImages(
-            @RequestParam("profilePicture") MultipartFile profilePicture
+    @PostMapping("/complete-registration/driver/car")
+    public void completeRegistrationCarInfo(
+            @RequestParam MultipartFile image1,
+            @RequestParam MultipartFile image2,
+            @RequestParam MultipartFile image3,
+            @RequestParam MultipartFile image4,
+            @RequestParam String carType,
+            @RequestParam String licensePlate,
+            @RequestParam MultipartFile carLicenseImageFront,
+            @RequestParam MultipartFile carLicenseImageBack
     ) {
-        return ResponseEntity.ok(service.completeRegistration(profilePicture));
+
+        service.completeRegistrationCarInfo(
+                image1,
+                image2,
+                image3,
+                image4,
+                carType,
+                licensePlate,
+                carLicenseImageFront,
+                carLicenseImageBack
+        );
     }
 
 }

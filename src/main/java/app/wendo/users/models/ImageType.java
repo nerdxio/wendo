@@ -2,8 +2,8 @@ package app.wendo.users.models;
 
 public enum ImageType {
     PROFILE_PICTURE,
-    LICENSE_FRONT,
-    LICENSE_BACK,
+    DRIVER_LICENSE_FRONT,
+    DRIVER_LICENSE_BACK,
     CAR_FRONT,
     CAR_BACK,
     CAR_LEFT,

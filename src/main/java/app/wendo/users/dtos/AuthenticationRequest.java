@@ -1,5 +1,6 @@
 package app.wendo.users.dtos;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,7 +11,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AuthenticationRequest {
-
-  private String phoneNumber;
-  String password;
+    @NotNull
+    private String phoneNumber;
+    @NotNull
+    String password;
 }

@@ -1,5 +1,8 @@
 package app.wendo.users.services;
 
+import app.wendo.car.Car;
+import app.wendo.car.CarRepository;
+import app.wendo.car.CarType;
 import app.wendo.files.FilesService;
 import app.wendo.security.JwtService;
 import app.wendo.users.dtos.AuthenticationRequest;
@@ -10,6 +13,7 @@ import app.wendo.users.models.Role;
 import app.wendo.users.models.User;
 import app.wendo.users.repositories.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -29,6 +33,7 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final FilesService filesService;
     private final UserRepository userRepository;
+    private final CarRepository carRepository;
 
     public AuthenticationResponse register(RegisterRequest request, Role role) {
 
@@ -91,17 +96,6 @@ public class AuthenticationService {
                 .build();
     }
 
-    public String completeRegistration(MultipartFile profilePicture) {
-        var user = getCurrentUser();
-        var image = filesService.uploadImage(profilePicture, ImageType.CAR_BACK, user);
-        return image.getImageUrl();
-    }
-
-    private User getCurrentUser() {
-        String phoneNumber = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByPhoneNumber(phoneNumber)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-    }
 
     public void completeRegistrationPassengerDocuments(
             String email,
@@ -116,6 +110,63 @@ public class AuthenticationService {
         filesService.uploadImage(idBackPicture, ImageType.NATIONAL_ID, user);
         user.setEmail(email);
         user.setProfileImageUrl(image.getImageUrl());
+        repository.save(user);
+    }
+
+    public void completeRegistrationDriverDocuments(
+            String email,
+            MultipartFile profilePicture,
+            MultipartFile idFrontPicture,
+            MultipartFile idBackPicture,
+            MultipartFile userLicenseFront,
+            MultipartFile userLicenseBack,
+            String dataOfBrith
+    ) {
+        var user = getCurrentUser();
+        var image = filesService.uploadImage(profilePicture, ImageType.PROFILE_PICTURE, user);
+        var idFront = filesService.uploadImage(idFrontPicture, ImageType.NATIONAL_ID, user);
+        var idBack = filesService.uploadImage(idBackPicture, ImageType.NATIONAL_ID, user);
+        var licenseFront = filesService.uploadImage(userLicenseFront, ImageType.DRIVER_LICENSE_FRONT, user);
+        var licenseBack = filesService.uploadImage(userLicenseBack, ImageType.DRIVER_LICENSE_BACK, user);
+        user.setEmail(email);
+        user.setProfileImageUrl(image.getImageUrl());
+        user.setDateOfBirth(dataOfBrith);
+        repository.save(user);
+    }
+
+
+    private User getCurrentUser() {
+        String phoneNumber = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByPhoneNumber(phoneNumber)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    public void completeRegistrationCarInfo(
+            MultipartFile image1,
+            MultipartFile image2,
+            MultipartFile image3,
+            MultipartFile image4,
+            String carType,
+            String licensePlate,
+            MultipartFile carLicenseImageFront,
+            MultipartFile carLicenseImageBack
+    ) {
+        var user = getCurrentUser();
+        var car = Car.builder()
+                .image1(filesService.uploadImage(image1, ImageType.CAR_FRONT, user).getImageUrl())
+                .image2(filesService.uploadImage(image2, ImageType.CAR_BACK, user).getImageUrl())
+                .image3(filesService.uploadImage(image3, ImageType.CAR_LEFT, user).getImageUrl())
+                .image4(filesService.uploadImage(image4, ImageType.CAR_RIGHT, user).getImageUrl())
+                .carType(CarType.valueOf(carType))
+                .licensePlate(licensePlate)
+                .carLicenseImageFront(filesService.uploadImage(carLicenseImageFront, ImageType.CAR_FRONT, user).getImageUrl())
+                .carLicenseImageBack(filesService.uploadImage(carLicenseImageBack, ImageType.CAR_BACK, user).getImageUrl())
+                .user(user)
+                .build();
+
+        var savedCar = carRepository.save(car);
+        user.setCar(savedCar);
+
         repository.save(user);
     }
 }
