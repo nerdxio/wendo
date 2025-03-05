@@ -3,6 +3,8 @@ package app.wendo.users.services;
 import app.wendo.car.Car;
 import app.wendo.car.CarRepository;
 import app.wendo.car.CarType;
+import app.wendo.exceptions.InvalidRefreshTokenException;
+import app.wendo.exceptions.UserNotFoundException;
 import app.wendo.files.FilesService;
 import app.wendo.security.JwtService;
 import app.wendo.users.dtos.AuthenticationRequest;
@@ -13,7 +15,6 @@ import app.wendo.users.models.Role;
 import app.wendo.users.models.User;
 import app.wendo.users.repositories.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.constraints.NotEmpty;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -62,7 +63,7 @@ public class AuthenticationService {
                 )
         );
         var user = repository.findByPhoneNumber(request.getPhoneNumber())
-                .orElseThrow();
+                .orElseThrow(UserNotFoundException::new);
 
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
@@ -83,10 +84,12 @@ public class AuthenticationService {
         userEmail = jwtService.extractUsername(refreshToken);
 
         var user = this.repository.findByPhoneNumber(userEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(UserNotFoundException::new);
 
-        if (!jwtService.isTokenValid(refreshToken, user)) {
-            throw new RuntimeException("Invalid refresh token");
+        try {
+            jwtService.isTokenValid(refreshToken, user);
+        } catch (Exception e) {
+            throw new InvalidRefreshTokenException();
         }
 
         var accessToken = jwtService.generateToken(user);
