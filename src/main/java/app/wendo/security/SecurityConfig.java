@@ -32,7 +32,9 @@ public class SecurityConfig {
             "/swagger-ui/**",
             "/webjars/**",
             "/swagger-ui.html",
-            "/uploads/**"
+            "/uploads/**",
+            "/api/v1/docs.html",
+            "/error"
     };
 
     private final JwtAuthenticationFilter jwtAuthFilter;

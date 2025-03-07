@@ -33,3 +33,24 @@ application:
 app:
   base-url: http://localhost:8080
   upload-dir: /home/nerd/uploads
+
+# OpenAPI/Swagger Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+    disable-swagger-default-url: true
+    doc-expansion: none
+    display-request-duration: true
+    use-root-path: true
+    filter: true
+  default-produces-media-type: application/json
+  show-actuator: false
+  writer-with-default-pretty-printer: true
+  override-with-generic-response: false
+  group-configs:
+    - group: v1
+      paths-to-match: /api/**
