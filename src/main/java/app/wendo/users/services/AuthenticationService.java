@@ -3,6 +3,7 @@ package app.wendo.users.services;
 import app.wendo.car.Car;
 import app.wendo.car.CarRepository;
 import app.wendo.car.CarType;
+import app.wendo.exceptions.IncompleteRegistrationException;
 import app.wendo.exceptions.InvalidRefreshTokenException;
 import app.wendo.exceptions.UserNotFoundException;
 import app.wendo.files.FilesService;
@@ -11,6 +12,7 @@ import app.wendo.users.dtos.AuthenticationRequest;
 import app.wendo.users.dtos.AuthenticationResponse;
 import app.wendo.users.dtos.RegisterRequest;
 import app.wendo.users.models.ImageType;
+import app.wendo.users.models.RegistrationStatus;
 import app.wendo.users.models.Role;
 import app.wendo.users.models.User;
 import app.wendo.users.repositories.UserRepository;
@@ -43,6 +45,7 @@ public class AuthenticationService {
                 .phoneNumber(request.getPhoneNumber())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(role)
+                .registrationStatus(RegistrationStatus.STEP_1_COMPLETE)
                 .build();
 
         var savedUser = repository.save(user);
@@ -52,6 +55,7 @@ public class AuthenticationService {
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
+                .registrationStatus(user.getRegistrationStatus().name())
                 .build();
     }
 
@@ -65,11 +69,17 @@ public class AuthenticationService {
         var user = repository.findByPhoneNumber(request.getPhoneNumber())
                 .orElseThrow(UserNotFoundException::new);
 
+        // Check if registration is complete
+        if (user.getRegistrationStatus() != RegistrationStatus.REGISTRATION_COMPLETE) {
+            throw new IncompleteRegistrationException("Registration incomplete", user.getRegistrationStatus());
+        }
+
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
+                .registrationStatus(user.getRegistrationStatus().name())
                 .build();
     }
 
@@ -113,6 +123,7 @@ public class AuthenticationService {
         filesService.uploadImage(idBackPicture, ImageType.NATIONAL_ID, user);
         user.setEmail(email);
         user.setProfileImageUrl(image.getImageUrl());
+        user.setRegistrationStatus(RegistrationStatus.REGISTRATION_COMPLETE);
         repository.save(user);
     }
 
@@ -127,13 +138,14 @@ public class AuthenticationService {
     ) {
         var user = getCurrentUser();
         var image = filesService.uploadImage(profilePicture, ImageType.PROFILE_PICTURE, user);
-        var idFront = filesService.uploadImage(idFrontPicture, ImageType.NATIONAL_ID, user);
-        var idBack = filesService.uploadImage(idBackPicture, ImageType.NATIONAL_ID, user);
-        var licenseFront = filesService.uploadImage(userLicenseFront, ImageType.DRIVER_LICENSE_FRONT, user);
-        var licenseBack = filesService.uploadImage(userLicenseBack, ImageType.DRIVER_LICENSE_BACK, user);
+        filesService.uploadImage(idFrontPicture, ImageType.NATIONAL_ID, user);
+        filesService.uploadImage(idBackPicture, ImageType.NATIONAL_ID, user);
+        filesService.uploadImage(userLicenseFront, ImageType.DRIVER_LICENSE_FRONT, user);
+        filesService.uploadImage(userLicenseBack, ImageType.DRIVER_LICENSE_BACK, user);
         user.setEmail(email);
         user.setProfileImageUrl(image.getImageUrl());
         user.setDateOfBirth(dataOfBrith);
+        user.setRegistrationStatus(RegistrationStatus.DRIVER_DOCS_COMPLETE);
         repository.save(user);
     }
 
@@ -170,6 +182,13 @@ public class AuthenticationService {
         var savedCar = carRepository.save(car);
         user.setCar(savedCar);
 
+        // Complete the registration
+        user.setRegistrationStatus(RegistrationStatus.REGISTRATION_COMPLETE);
         repository.save(user);
+    }
+
+    // Add a method to check registration status
+    public RegistrationStatus getRegistrationStatus() {
+        return getCurrentUser().getRegistrationStatus();
     }
 }

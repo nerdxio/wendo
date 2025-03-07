@@ -51,6 +51,9 @@ public class User implements UserDetails {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Car car;
 
+    @Enumerated(EnumType.STRING)
+    private RegistrationStatus registrationStatus = RegistrationStatus.STEP_1_COMPLETE;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return role.getAuthorities();
@@ -83,7 +86,8 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        // Only fully registered users are enabled
+        return registrationStatus == RegistrationStatus.REGISTRATION_COMPLETE;
     }
 
 

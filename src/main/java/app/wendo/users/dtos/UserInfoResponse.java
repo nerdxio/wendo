@@ -8,6 +8,7 @@ public record UserInfoResponse(
         String email,
         String profilePicture,
         String phoneNumber,
-        boolean isOnline
+        boolean isOnline,
+        String registrationStatus
 ) {
 }
