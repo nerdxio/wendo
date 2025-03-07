@@ -8,6 +8,7 @@ import app.wendo.users.services.AuthenticationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -51,9 +52,9 @@ public class UserAuthController {
     @PostMapping("/complete-registration/passenger")
     public void completeRegistrationPassengerDocuments(
             @Email @RequestParam String email,
-            @NotNull @RequestParam("profilePicture") MultipartFile profilePicture,
-            @NotNull @RequestParam("idFrontPicture") MultipartFile idFrontPicture,
-            @NotNull @RequestParam("idBackPicture") MultipartFile idBackPicture
+             @RequestParam("profilePicture") MultipartFile profilePicture,
+            @RequestParam("idFrontPicture") MultipartFile idFrontPicture,
+            @RequestParam("idBackPicture") MultipartFile idBackPicture
     ) {
         service.completeRegistrationPassengerDocuments(
                 email,

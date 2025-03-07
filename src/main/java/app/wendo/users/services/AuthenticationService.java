@@ -71,7 +71,7 @@ public class AuthenticationService {
 
         // Check if registration is complete
         if (user.getRegistrationStatus() != RegistrationStatus.REGISTRATION_COMPLETE) {
-            throw new IncompleteRegistrationException("Registration incomplete", user.getRegistrationStatus());
+            throw new IncompleteRegistrationException("Registration incomplete", user.getRegistrationStatus(),user.getRole().name());
         }
 
         var jwtToken = jwtService.generateToken(user);
