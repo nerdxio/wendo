@@ -11,10 +11,9 @@ import app.wendo.security.JwtService;
 import app.wendo.users.dtos.AuthenticationRequest;
 import app.wendo.users.dtos.AuthenticationResponse;
 import app.wendo.users.dtos.RegisterRequest;
-import app.wendo.users.models.ImageType;
-import app.wendo.users.models.RegistrationStatus;
-import app.wendo.users.models.Role;
-import app.wendo.users.models.User;
+import app.wendo.users.models.*;
+import app.wendo.users.repositories.DriverRepository;
+import app.wendo.users.repositories.PassengerRepository;
 import app.wendo.users.repositories.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +36,8 @@ public class AuthenticationService {
     private final FilesService filesService;
     private final UserRepository userRepository;
     private final CarRepository carRepository;
+    private final DriverRepository driverRepository;
+    private final PassengerRepository passengerRepository;
 
     public AuthenticationResponse register(RegisterRequest request, Role role) {
 
@@ -49,6 +50,22 @@ public class AuthenticationService {
                 .build();
 
         var savedUser = repository.save(user);
+
+        if (role == Role.PASSENGER) {
+            var passenger = Passenger.builder()
+                    .user(savedUser)
+                    .build();
+            passengerRepository.save(passenger);
+        }
+
+        if (role == Role.DRIVER) {
+            var driver = Driver.builder()
+                    .user(savedUser)
+                    .isAvailable(true)
+                    .build();
+            driverRepository.save(driver);
+        }
+
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
 
@@ -71,7 +88,7 @@ public class AuthenticationService {
 
         // Check if registration is complete
         if (user.getRegistrationStatus() != RegistrationStatus.REGISTRATION_COMPLETE) {
-            throw new IncompleteRegistrationException("Registration incomplete", user.getRegistrationStatus(),user.getRole().name());
+            throw new IncompleteRegistrationException("Registration incomplete", user.getRegistrationStatus(), user.getRole().name());
         }
 
         var jwtToken = jwtService.generateToken(user);
