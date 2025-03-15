@@ -15,7 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/trips")
 @RequiredArgsConstructor
-public class TripController {
+public class DriverTripController {
 
     private final TripService tripService;
     
@@ -35,6 +35,17 @@ public class TripController {
         return ResponseEntity.ok(tripService.getMyTrips());
     }
     
+    @GetMapping("/history")
+    @PreAuthorize("hasRole('DRIVER')")
+    public ResponseEntity<List<TripResponse>> getTripHistory() {
+        return ResponseEntity.ok(tripService.getDriverTripHistory());
+    }
+
+    @GetMapping("/active")
+    @PreAuthorize("hasRole('DRIVER')")
+    public ResponseEntity<List<TripResponse>> getActiveTrips() {
+        return ResponseEntity.ok(tripService.getDriverActiveTrips());
+    }
 
     @PutMapping("/{tripId}/cancel")
     @PreAuthorize("hasRole('DRIVER')")

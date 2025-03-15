@@ -45,6 +45,8 @@ public class TripResponse {
     private LocalDateTime createdAt;
     private LocalDateTime startedAt;
     private LocalDateTime completedAt;
+    private LocalDateTime plannedStartTime;
+    private Long minutesRemainingToCancel;
     
     // Inner class to represent passenger information
     @Data

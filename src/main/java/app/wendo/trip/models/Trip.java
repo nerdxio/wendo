@@ -77,6 +77,9 @@ public class Trip {
     @Column(name = "estimated_duration_minutes")
     private Integer estimatedDurationMinutes;
 
+    @Column(name = "planned_start_time", nullable = false)
+    private LocalDateTime plannedStartTime;
+
     // Add a passenger to this trip if seats available
     public boolean addPassenger(Passenger passenger) {
         if (availableSeats > 0) {

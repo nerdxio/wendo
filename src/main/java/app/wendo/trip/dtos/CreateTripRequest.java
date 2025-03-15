@@ -1,5 +1,6 @@
 package app.wendo.trip.dtos;
 
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -23,6 +24,8 @@ public class CreateTripRequest {
     @NotBlank(message = "Destination is required")
     private String destination;
 
-    private LocalDateTime startDate;
+    @NotNull(message = "Planned start time is required")
+    @Future(message = "Planned start time must be in the future")
+    private LocalDateTime plannedStartTime;
 
 }

@@ -1,5 +1,6 @@
 package app.wendo.trip.services;
 
+import app.wendo.exceptions.ResourceNotFoundException;
 import app.wendo.security.SecurityUtils;
 import app.wendo.trip.dtos.CreateTripRequest;
 import app.wendo.trip.dtos.TripResponse;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -63,8 +65,8 @@ public class TripService {
                 .build();
 
         // Set start date if provided
-        if (request.getStartDate() != null) {
-            trip.setStartedAt(request.getStartDate());
+        if (request.getPlannedStartTime() != null) {
+            trip.setPlannedStartTime(request.getPlannedStartTime());
         }
 
         // Save the trip
@@ -144,25 +146,21 @@ public class TripService {
 
     @Transactional
     public TripResponse cancelTrip(Long tripId) {
-        User currentUser = securityUtils.getCurrentUser();
-        Driver driver = driverRepository.findByUser(currentUser)
-                .orElseThrow(() -> new RuntimeException("Driver record not found"));
+        Trip trip = getTripById(tripId);
+        validateTripCancellation(trip);
+        trip.setStatus(TripStatus.CANCELLED);
+        return convertToTripResponse(tripRepository.save(trip));
+    }
 
-        Trip trip = findTripAndValidateOwnership(tripId, driver);
-
-        // Can only cancel if not already completed or cancelled
+    private void validateTripCancellation(Trip trip) {
         if (trip.getStatus() == TripStatus.COMPLETED || trip.getStatus() == TripStatus.CANCELLED) {
-            throw new InvalidTripStatusTransitionException(
-                    trip.getStatus(), TripStatus.CANCELLED);
+            throw new IllegalStateException("Cannot cancel a completed or already cancelled trip");
         }
 
-        trip.setStatus(TripStatus.CANCELLED);
-
-        // Make the driver available again
-        driver.setIsAvailable(true);
-        driverRepository.save(driver);
-
-        return convertToTripResponse(tripRepository.save(trip));
+        LocalDateTime cancellationDeadline = trip.getPlannedStartTime().minusHours(3);
+        if (LocalDateTime.now().isAfter(cancellationDeadline)) {
+            throw new IllegalStateException("Trip cannot be cancelled less than 3 hours before start time");
+        }
     }
 
     @Transactional
@@ -283,6 +281,40 @@ public class TripService {
                 .collect(Collectors.toList());
     }
 
+    public List<TripResponse> getDriverTripHistory() {
+        User currentUser = securityUtils.getCurrentUser();
+        Driver driver = driverRepository.findByUser(currentUser)
+                .orElseThrow(() -> new RuntimeException("Driver record not found"));
+
+        List<Trip> trips = tripRepository.findByDriverOrderByCreatedAtDesc(driver)
+                .stream()
+                .filter(trip -> trip.getStatus() == TripStatus.COMPLETED || 
+                               trip.getStatus() == TripStatus.CANCELLED)
+                .collect(Collectors.toList());
+
+        return trips.stream()
+                .map(this::convertToTripResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<TripResponse> getDriverActiveTrips() {
+        User currentUser = securityUtils.getCurrentUser();
+        Driver driver = driverRepository.findByUser(currentUser)
+                .orElseThrow(() -> new RuntimeException("Driver record not found"));
+
+        List<Trip> trips = tripRepository.findByDriverOrderByCreatedAtDesc(driver)
+                .stream()
+                .filter(trip -> trip.getStatus() == TripStatus.CREATED || 
+                               trip.getStatus() == TripStatus.SEARCHING ||
+                               trip.getStatus() == TripStatus.CONFIRMED ||
+                               trip.getStatus() == TripStatus.IN_PROGRESS)
+                .collect(Collectors.toList());
+
+        return trips.stream()
+                .map(this::convertToTripResponse)
+                .collect(Collectors.toList());
+    }
+
     private Trip findTripAndValidateOwnership(Long tripId, Driver driver) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new TripNotFoundException("Trip not found with id: " + tripId));
@@ -295,7 +327,25 @@ public class TripService {
         return trip;
     }
 
+    private Trip getTripById(Long tripId) {
+        return tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found with id: " + tripId));
+    }
+
     private TripResponse convertToTripResponse(Trip trip) {
+        Long minutesRemainingToCancel = null;
+        if (trip.getStatus() != TripStatus.COMPLETED && 
+            trip.getStatus() != TripStatus.CANCELLED && 
+            trip.getPlannedStartTime() != null) {
+            
+            LocalDateTime cancellationDeadline = trip.getPlannedStartTime().minusHours(3);
+            LocalDateTime now = LocalDateTime.now();
+            
+            if (now.isBefore(cancellationDeadline)) {
+                minutesRemainingToCancel = ChronoUnit.MINUTES.between(now, cancellationDeadline);
+            }
+        }
+
         TripResponse response = new TripResponse();
         response.setId(trip.getId());
         response.setStatus(trip.getStatus());
@@ -334,6 +384,8 @@ public class TripService {
         response.setCreatedAt(trip.getCreatedAt());
         response.setStartedAt(trip.getStartedAt());
         response.setCompletedAt(trip.getCompletedAt());
+        response.setPlannedStartTime(trip.getPlannedStartTime());
+        response.setMinutesRemainingToCancel(minutesRemainingToCancel);
 
         return response;
     }
