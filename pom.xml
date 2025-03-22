@@ -28,6 +28,12 @@
     </scm>
     <properties>
         <java.version>23</java.version>
+        <jib-maven-plugin.image>wendo</jib-maven-plugin.image>
+        <jib-maven-plugin.image.base>amazoncorretto:23-al2023-headful</jib-maven-plugin.image.base>
+        <jib-maven-plugin.version>3.4.5</jib-maven-plugin.version>
+        <jib-maven-plugin.mainClass>app.wendo.WendoApplication</jib-maven-plugin.mainClass>
+        <jib-maven-plugin.port>8080</jib-maven-plugin.port>
+        <jib-maven-plugin.tag>latest</jib-maven-plugin.tag>
     </properties>
     <dependencies>
         <dependency>
@@ -141,6 +147,34 @@
                     </excludes>
                 </configuration>
             </plugin>
+
+
+
+
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <version>${jib-maven-plugin.version}</version>
+                <configuration>
+                    <from>
+                        <image>${jib-maven-plugin.image.base}</image>
+                    </from>
+                    <to>
+                        <image>${jib-maven-plugin.image}</image>
+                        <tags>
+                            <tag>${jib-maven-plugin.tag}</tag>
+                        </tags>
+                    </to>
+                    <container>
+                        <mainClass>${jib-maven-plugin.mainClass}</mainClass>
+                        <ports>
+                            <port>${jib-maven-plugin.port}</port>
+                        </ports>
+                    </container>
+
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
 
