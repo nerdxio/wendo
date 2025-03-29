@@ -66,9 +66,14 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 
-    // ===============================
-    // === Registration Handlers ===
-    // ===============================
+    @ExceptionHandler(OtpException.class)
+    public ResponseEntity<ErrorResponse> handleOtpException(OtpException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                "otp-error",
+                ex.getMessage()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
 
     @ExceptionHandler(IncompleteRegistrationException.class)
     public ResponseEntity<ErrorResponseWithDetails> handleIncompleteRegistrationException(IncompleteRegistrationException ex) {

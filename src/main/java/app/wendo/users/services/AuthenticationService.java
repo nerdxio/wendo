@@ -14,6 +14,7 @@ import app.wendo.users.dtos.RegisterRequest;
 import app.wendo.users.models.*;
 import app.wendo.users.repositories.DriverRepository;
 import app.wendo.users.repositories.PassengerRepository;
+import app.wendo.users.repositories.TokenRepository;
 import app.wendo.users.repositories.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ public class AuthenticationService {
     private final CarRepository carRepository;
     private final DriverRepository driverRepository;
     private final PassengerRepository passengerRepository;
+    private final TokenRepository tokenRepository;
 
     public AuthenticationResponse register(RegisterRequest request, Role role) {
 
@@ -69,6 +71,7 @@ public class AuthenticationService {
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
 
+        saveUserToken(savedUser, jwtToken);
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
@@ -93,6 +96,8 @@ public class AuthenticationService {
 
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
+        revokeAllUserTokens(user);
+        saveUserToken(user, jwtToken);
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
@@ -120,6 +125,8 @@ public class AuthenticationService {
         }
 
         var accessToken = jwtService.generateToken(user);
+        revokeAllUserTokens(user);
+        saveUserToken(user, accessToken);
         return AuthenticationResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
@@ -207,5 +214,27 @@ public class AuthenticationService {
     // Add a method to check registration status
     public RegistrationStatus getRegistrationStatus() {
         return getCurrentUser().getRegistrationStatus();
+    }
+
+    private void saveUserToken(User user, String jwtToken) {
+        var token = Token.builder()
+                .user(user)
+                .token(jwtToken)
+                .tokenType(TokenType.BEARER)
+                .expired(false)
+                .revoked(false)
+                .build();
+        tokenRepository.save(token);
+    }
+
+    private void revokeAllUserTokens(User user) {
+        var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
+        if (validUserTokens.isEmpty())
+            return;
+        validUserTokens.forEach(token -> {
+            token.setExpired(true);
+            token.setRevoked(true);
+        });
+        tokenRepository.saveAll(validUserTokens);
     }
 }

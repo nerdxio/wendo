@@ -52,7 +52,7 @@ public class UserAuthController {
     @PostMapping("/complete-registration/passenger")
     public void completeRegistrationPassengerDocuments(
             @Email @RequestParam String email,
-             @RequestParam("profilePicture") MultipartFile profilePicture,
+            @RequestParam("profilePicture") MultipartFile profilePicture,
             @RequestParam("idFrontPicture") MultipartFile idFrontPicture,
             @RequestParam("idBackPicture") MultipartFile idBackPicture
     ) {

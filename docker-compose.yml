@@ -3,7 +3,7 @@ version: '3.8'
 services:
   postgres:
     image: postgres:latest
-    container_name: postgres
+    container_name: wendo-postgres
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
