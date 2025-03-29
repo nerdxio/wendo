@@ -1,0 +1,49 @@
+services:
+  app:
+    image: wendo:latest
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/wendo_db
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=pass
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_SHOW_SQL=false
+      - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
+      - SPRING_JPA_DATABASE=postgresql
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE=10MB
+      - SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE=10MB
+      - APPLICATION_SECURITY_JWT_SECRET_KEY=403E631266556A586E2272357538782F413F4428472B4B6250645367566B5970
+      - APPLICATION_SECURITY_JWT_EXPIRATION=2592000000
+      - APPLICATION_SECURITY_JWT_REFRESH_TOKEN_EXPIRATION=2592000000
+      - APP_BASE_URL=http://178.16.130.173:8080
+      - APP_UPLOAD_DIR=/home/root/uploads
+      - SPRINGDOC_API_DOCS_PATH=/v3/api-docs
+      - SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html
+      - SPRINGDOC_SWAGGER_UI_OPERATIONS_SORTER=method
+      - SPRINGDOC_SWAGGER_UI_TAGS_SORTER=alpha
+      - SPRINGDOC_SWAGGER_UI_DISABLE_SWAGGER_DEFAULT_URL=true
+      - SPRINGDOC_SWAGGER_UI_DOC_EXPANSION=none
+      - SPRINGDOC_SWAGGER_UI_DISPLAY_REQUEST_DURATION=true
+      - SPRINGDOC_SWAGGER_UI_USE_ROOT_PATH=true
+      - SPRINGDOC_SWAGGER_UI_FILTER=true
+      - SPRINGDOC_DEFAULT_PRODUCES_MEDIA_TYPE=application/json
+      - SPRINGDOC_SHOW_ACTUATOR=false
+      - SPRINGDOC_WRITER_WITH_DEFAULT_PRETTY_PRINTER=true
+      - SPRINGDOC_OVERRIDE_WITH_GENERIC_RESPONSE=false
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+  db:
+    image: postgres:latest
+    environment:
+      - POSTGRES_DB=wendo_db
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

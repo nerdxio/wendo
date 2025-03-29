@@ -1,6 +1,5 @@
 package app.wendo.trip.services;
 
-import app.wendo.exceptions.ResourceNotFoundException;
 import app.wendo.security.SecurityUtils;
 import app.wendo.trip.dtos.CreateTripRequest;
 import app.wendo.trip.dtos.TripResponse;
@@ -329,7 +328,7 @@ public class TripService {
 
     private Trip getTripById(Long tripId) {
         return tripRepository.findById(tripId)
-                .orElseThrow(() -> new ResourceNotFoundException("Trip not found with id: " + tripId));
+                .orElseThrow(() -> new RuntimeException("Trip not found with id: " + tripId));
     }
 
     private TripResponse convertToTripResponse(Trip trip) {
