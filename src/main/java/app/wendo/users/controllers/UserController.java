@@ -1,6 +1,8 @@
 package app.wendo.users.controllers;
 
+import app.wendo.security.SecurityUtils;
 import app.wendo.users.dtos.UserInfoResponse;
+import app.wendo.users.models.Role;
 import app.wendo.users.services.UserService;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -15,10 +17,16 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final SecurityUtils securityUtils;
 
     @GetMapping("/me")
-    public ResponseEntity<UserInfoResponse> getMe() {
-        return ResponseEntity.ok(userService.getUserInfo());
+    public ResponseEntity<?> getMe() {
+        var user = securityUtils.getCurrentUser();
+        if (user.getRole() == Role.DRIVER) {
+            return ResponseEntity.ok(userService.getDriverInfo());
+        } else {
+            return ResponseEntity.ok(userService.getPassengerInfo());
+        }
     }
 
     @PostMapping("/status")

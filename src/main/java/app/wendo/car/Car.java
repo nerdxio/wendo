@@ -5,6 +5,7 @@ import app.wendo.users.models.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.proxy.HibernateProxy;
 
@@ -13,6 +14,7 @@ import java.util.Objects;
 @Entity
 @Table(name = "cars")
 @Builder
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Car {

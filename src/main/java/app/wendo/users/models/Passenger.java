@@ -29,24 +29,29 @@ public class Passenger {
 
     @Column(name = "total_trips")
     private Integer totalTrips;
-    
+    @Column(name = "national_id_front")
+    private String nationalIdFront;
+
+    @Column(name = "national_id_back")
+    private String nationalIdBack;
+
     // Replace one-to-many with many-to-many relationship
     @ManyToMany(mappedBy = "passengers")
     private Set<Trip> trips = new HashSet<>();
-    
+
     // Method to check if passenger has active trips
     public boolean hasActiveTrip() {
-        return trips.stream().anyMatch(trip -> 
-            trip.getStatus() == app.wendo.trip.models.TripStatus.CONFIRMED ||
-            trip.getStatus() == app.wendo.trip.models.TripStatus.IN_PROGRESS
+        return trips.stream().anyMatch(trip ->
+                trip.getStatus() == app.wendo.trip.models.TripStatus.CONFIRMED ||
+                        trip.getStatus() == app.wendo.trip.models.TripStatus.IN_PROGRESS
         );
     }
-    
+
     // Method to get active trip if any
     public Trip getActiveTrip() {
-        return trips.stream().filter(trip -> 
-            trip.getStatus() == app.wendo.trip.models.TripStatus.CONFIRMED ||
-            trip.getStatus() == app.wendo.trip.models.TripStatus.IN_PROGRESS
+        return trips.stream().filter(trip ->
+                trip.getStatus() == app.wendo.trip.models.TripStatus.CONFIRMED ||
+                        trip.getStatus() == app.wendo.trip.models.TripStatus.IN_PROGRESS
         ).findFirst().orElse(null);
     }
 

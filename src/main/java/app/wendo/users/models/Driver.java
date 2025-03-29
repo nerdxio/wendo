@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.proxy.HibernateProxy;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +38,16 @@ public class Driver {
     @Column(name = "total_trips")
     private Integer totalTrips;
 
+    @Column(name = "national_id_front")
+    private String nationalIdFront;
+
+    @Column(name = "national_id_back")
+    private String nationalIdBack;
+
+    @Column(name = "driver_license_front_picture")
+    private String driverLicenseFrontPicture;
+    @Column(name = "driver_license_back_picture")
+    private String driverLicenseBackPicture;
 //    @OneToOne(mappedBy = "driver", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 //    private Car car;
 //

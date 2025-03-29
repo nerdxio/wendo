@@ -143,8 +143,15 @@ public class AuthenticationService {
 
         var user = getCurrentUser();
         var image = filesService.uploadImage(profilePicture, ImageType.PROFILE_PICTURE, user);
-        filesService.uploadImage(idFrontPicture, ImageType.NATIONAL_ID, user);
-        filesService.uploadImage(idBackPicture, ImageType.NATIONAL_ID, user);
+
+        var nationalIdFront = filesService.uploadImage(idFrontPicture, ImageType.NATIONAL_ID, user);
+        var nationalIdBack = filesService.uploadImage(idBackPicture, ImageType.NATIONAL_ID, user);
+
+        var pass = passengerRepository.findByUser(user).orElseThrow(UserNotFoundException::new);
+        pass.setNationalIdBack(nationalIdBack.getImageUrl());
+        pass.setNationalIdFront(nationalIdFront.getImageUrl());
+        passengerRepository.save(pass);
+
         user.setEmail(email);
         user.setProfileImageUrl(image.getImageUrl());
         user.setRegistrationStatus(RegistrationStatus.REGISTRATION_COMPLETE);
@@ -162,14 +169,24 @@ public class AuthenticationService {
     ) {
         var user = getCurrentUser();
         var image = filesService.uploadImage(profilePicture, ImageType.PROFILE_PICTURE, user);
-        filesService.uploadImage(idFrontPicture, ImageType.NATIONAL_ID, user);
-        filesService.uploadImage(idBackPicture, ImageType.NATIONAL_ID, user);
-        filesService.uploadImage(userLicenseFront, ImageType.DRIVER_LICENSE_FRONT, user);
-        filesService.uploadImage(userLicenseBack, ImageType.DRIVER_LICENSE_BACK, user);
+
+        var idFront = filesService.uploadImage(idFrontPicture, ImageType.NATIONAL_ID, user);
+        var idBack = filesService.uploadImage(idBackPicture, ImageType.NATIONAL_ID, user);
+        var licenseFront = filesService.uploadImage(userLicenseFront, ImageType.DRIVER_LICENSE_FRONT, user);
+        var licenseBack = filesService.uploadImage(userLicenseBack, ImageType.DRIVER_LICENSE_BACK, user);
+
         user.setEmail(email);
         user.setProfileImageUrl(image.getImageUrl());
         user.setDateOfBirth(dataOfBrith);
         user.setRegistrationStatus(RegistrationStatus.DRIVER_DOCS_COMPLETE);
+
+        var driver = driverRepository.findByUser(user).orElseThrow();
+        driver.setNationalIdBack(idBack.getImageUrl());
+        driver.setNationalIdFront(idFront.getImageUrl());
+        driver.setDriverLicenseBackPicture(licenseBack.getImageUrl());
+        driver.setDriverLicenseFrontPicture(licenseFront.getImageUrl());
+        driverRepository.save(driver);
+
         repository.save(user);
     }
 
