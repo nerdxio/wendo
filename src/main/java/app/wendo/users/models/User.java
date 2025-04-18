@@ -28,7 +28,7 @@ public class User implements UserDetails {
     @Column(name = "full_name")
     private String fullName;
 
-    @Column(name = "phone_number")
+    @Column(name = "phone_number", unique = true)
     private String phoneNumber;
 
     private String password;
@@ -39,19 +39,22 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<UserImage> userImages;
 
-    @Email
+    @Email(message = "Email should be valid")
     private String email;
 
     private boolean isOnline;
+
     @Column(name = "profile_image_url")
     private String profileImageUrl;
 
+    @Column(name = "date_of_birth")
     private String dateOfBirth;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Car car;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "registration_status")
     private RegistrationStatus registrationStatus = RegistrationStatus.STEP_1_COMPLETE;
 
     @Override

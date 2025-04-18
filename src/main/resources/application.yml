@@ -1,4 +1,6 @@
 spring:
+  jackson:
+    time-zone: UTC
   datasource:
     url: jdbc:postgresql://localhost:5432/wendo_db
     username: user

@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -42,8 +42,8 @@ public class OtpService {
                 .code(otpCode)
                 .channel(Channel.fromString(request.channel()))
                 .identifier(request.identifier())
-                .createdAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES))
+                .createdAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(OTP_EXPIRY_MINUTES * 60))
                 .used(false)
                 .build();
 
@@ -78,7 +78,7 @@ public class OtpService {
 
         // Mark the OTP as used
         otp.setUsed(true);
-        otp.setVerifiedAt(LocalDateTime.now());
+        otp.setVerifiedAt(Instant.now());
         otpRepository.save(otp);
 
         return true;

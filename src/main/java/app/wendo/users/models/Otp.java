@@ -3,7 +3,7 @@ package app.wendo.users.models;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "otps")
@@ -28,17 +28,17 @@ public class Otp {
     private Channel channel;
 
     @Column(nullable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @Column(nullable = false)
-    private LocalDateTime expiresAt;
+    private Instant expiresAt;
 
-    private LocalDateTime verifiedAt;
+    private Instant verifiedAt;
 
     private boolean used;
 
     public boolean isExpired() {
-        return LocalDateTime.now().isAfter(expiresAt);
+        return Instant.now().isAfter(expiresAt);
     }
 
     public boolean isValid() {

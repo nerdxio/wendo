@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +38,6 @@ public class TripService {
     public TripResponse createTrip(CreateTripRequest request) {
         User currentUser = securityUtils.getCurrentUser();
 
-        // Get the driver entity associated with the current user
         Driver driver = driverRepository.findByUser(currentUser)
                 .orElseThrow(() -> new RuntimeException("Driver record not found"));
 
@@ -47,11 +46,12 @@ public class TripService {
             throw new DriverNotAvailableException("Driver is not active or available");
         }
 
-        // Check if driver already has an active trip
-        if (driver.hasActiveTrip()) {
-            throw new DriverNotAvailableException(
-                    "Driver already has an active trip with status: " + driver.getActiveTrip().getStatus());
-        }
+        //todo: remove the comment this just for testing
+//        // Check if driver already has an active trip
+//        if (driver.hasActiveTrip()) {
+//            throw new DriverNotAvailableException(
+//                    "Driver already has an active trip with status: " + driver.getActiveTrip().getStatus());
+//        }
 
         // Create new trip with default values for passenger capacity
         Trip trip = Trip.builder()
@@ -71,8 +71,9 @@ public class TripService {
         // Save the trip
         Trip savedTrip = tripRepository.save(trip);
 
+        //todo: make the vaildtion to be on the time (he cant create more than one trip in same time or time + 1)
         // Update driver availability status
-        driver.setIsAvailable(false);
+//        driver.setIsAvailable(false);
         driverRepository.save(driver);
 
         return convertToTripResponse(savedTrip);
@@ -156,14 +157,14 @@ public class TripService {
             throw new IllegalStateException("Cannot cancel a completed or already cancelled trip");
         }
 
-        LocalDateTime cancellationDeadline = trip.getPlannedStartTime().minusHours(3);
-        if (LocalDateTime.now().isAfter(cancellationDeadline)) {
+        Instant cancellationDeadline = trip.getPlannedStartTime().minus(3, ChronoUnit.HOURS);
+        if (Instant.now().isAfter(cancellationDeadline)) {
             throw new IllegalStateException("Trip cannot be cancelled less than 3 hours before start time");
         }
     }
 
     @Transactional
-    public TripResponse confirmTrip(Long tripId, Long passengerId) {
+    public TripResponse confirmTrip(Long tripId) {
         User currentUser = securityUtils.getCurrentUser();
         Driver driver = driverRepository.findByUser(currentUser)
                 .orElseThrow(() -> new RuntimeException("Driver record not found"));
@@ -189,14 +190,15 @@ public class TripService {
 
         Trip trip = findTripAndValidateOwnership(tripId, driver);
 
-        // Validate current status
-        if (trip.getStatus() != TripStatus.CONFIRMED) {
-            throw new InvalidTripStatusTransitionException(
-                    trip.getStatus(), TripStatus.IN_PROGRESS);
-        }
+        //todo: remove the comment this just for testing
+//        // Validate current status
+//        if (trip.getStatus() != TripStatus.CONFIRMED || trip.getStatus() != TripStatus.CREATED) {
+//            throw new InvalidTripStatusTransitionException(
+//                    trip.getStatus(), TripStatus.IN_PROGRESS);
+//        }
 
         trip.setStatus(TripStatus.IN_PROGRESS);
-        trip.setStartedAt(LocalDateTime.now());
+        trip.setStartedAt(Instant.now());
 
         return convertToTripResponse(tripRepository.save(trip));
     }
@@ -216,7 +218,7 @@ public class TripService {
         }
 
         trip.setStatus(TripStatus.COMPLETED);
-        trip.setCompletedAt(LocalDateTime.now());
+        trip.setCompletedAt(Instant.now());
 
         // Make driver available again
         driver.setIsAvailable(true);
@@ -287,8 +289,8 @@ public class TripService {
 
         List<Trip> trips = tripRepository.findByDriverOrderByCreatedAtDesc(driver)
                 .stream()
-                .filter(trip -> trip.getStatus() == TripStatus.COMPLETED || 
-                               trip.getStatus() == TripStatus.CANCELLED)
+                .filter(trip -> trip.getStatus() == TripStatus.COMPLETED ||
+                        trip.getStatus() == TripStatus.CANCELLED)
                 .collect(Collectors.toList());
 
         return trips.stream()
@@ -303,10 +305,10 @@ public class TripService {
 
         List<Trip> trips = tripRepository.findByDriverOrderByCreatedAtDesc(driver)
                 .stream()
-                .filter(trip -> trip.getStatus() == TripStatus.CREATED || 
-                               trip.getStatus() == TripStatus.SEARCHING ||
-                               trip.getStatus() == TripStatus.CONFIRMED ||
-                               trip.getStatus() == TripStatus.IN_PROGRESS)
+                .filter(trip -> trip.getStatus() == TripStatus.CREATED ||
+                        trip.getStatus() == TripStatus.SEARCHING ||
+                        trip.getStatus() == TripStatus.CONFIRMED ||
+                        trip.getStatus() == TripStatus.IN_PROGRESS)
                 .collect(Collectors.toList());
 
         return trips.stream()
@@ -333,13 +335,13 @@ public class TripService {
 
     private TripResponse convertToTripResponse(Trip trip) {
         Long minutesRemainingToCancel = null;
-        if (trip.getStatus() != TripStatus.COMPLETED && 
-            trip.getStatus() != TripStatus.CANCELLED && 
-            trip.getPlannedStartTime() != null) {
-            
-            LocalDateTime cancellationDeadline = trip.getPlannedStartTime().minusHours(3);
-            LocalDateTime now = LocalDateTime.now();
-            
+        if (trip.getStatus() != TripStatus.COMPLETED &&
+                trip.getStatus() != TripStatus.CANCELLED &&
+                trip.getPlannedStartTime() != null) {
+
+            Instant cancellationDeadline = trip.getPlannedStartTime().minus(3, ChronoUnit.HOURS);
+            Instant now = Instant.now();
+
             if (now.isBefore(cancellationDeadline)) {
                 minutesRemainingToCancel = ChronoUnit.MINUTES.between(now, cancellationDeadline);
             }

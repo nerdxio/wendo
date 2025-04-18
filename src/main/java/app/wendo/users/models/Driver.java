@@ -1,6 +1,5 @@
 package app.wendo.users.models;
 
-import app.wendo.car.Car;
 import app.wendo.trip.models.Trip;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -8,7 +7,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.proxy.HibernateProxy;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +28,7 @@ public class Driver {
     private User user;
 
     @Column(name = "is_available")
-    private Boolean isAvailable = false;
+    private Boolean isAvailable = true;
 
     @Column(name = "rating")
     private Double rating;

@@ -12,7 +12,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -62,23 +62,23 @@ public class Trip {
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
     @Column(name = "started_at")
-    private LocalDateTime startedAt;
+    private Instant startedAt;
 
     @Column(name = "completed_at")
-    private LocalDateTime completedAt;
+    private Instant completedAt;
     
     @Column(name = "estimated_duration_minutes")
     private Integer estimatedDurationMinutes;
 
     @Column(name = "planned_start_time", nullable = false)
-    private LocalDateTime plannedStartTime;
+    private Instant plannedStartTime;
 
     // Add a passenger to this trip if seats available
     public boolean addPassenger(Passenger passenger) {

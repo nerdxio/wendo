@@ -10,7 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Data
 @Builder
@@ -26,6 +26,6 @@ public class CreateTripRequest {
 
     @NotNull(message = "Planned start time is required")
     @Future(message = "Planned start time must be in the future")
-    private LocalDateTime plannedStartTime;
+    private Instant plannedStartTime;
 
 }

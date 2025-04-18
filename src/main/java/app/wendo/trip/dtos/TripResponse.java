@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Data
@@ -42,10 +42,10 @@ public class TripResponse {
     private Double distanceKilometers;
     
     private TripStatus status;
-    private LocalDateTime createdAt;
-    private LocalDateTime startedAt;
-    private LocalDateTime completedAt;
-    private LocalDateTime plannedStartTime;
+    private Instant createdAt;
+    private Instant startedAt;
+    private Instant completedAt;
+    private Instant plannedStartTime;
     private Long minutesRemainingToCancel;
     
     // Inner class to represent passenger information
