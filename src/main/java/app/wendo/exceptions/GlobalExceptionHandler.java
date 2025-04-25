@@ -1,9 +1,12 @@
 package app.wendo.exceptions;
 
+import app.wendo.locations.exceptions.LocationNotFoundException;
+import app.wendo.locations.exceptions.LocationPriceAlreadyExistsException;
 import app.wendo.users.models.RegistrationStatus;
 import app.wendo.users.models.User;
 import app.wendo.users.repositories.UserRepository;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,7 +45,7 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse(e.getCode(), e.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
-    
+
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentialsException(BadCredentialsException ex) {
         ErrorResponse errorResponse = new ErrorResponse(
@@ -51,14 +54,14 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
-    
+
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<?> handleAuthenticationException(AuthenticationException ex) {
         // If it's a disabled exception, delegate to the specific handler
         if (ex instanceof DisabledException) {
             return handleDisabledException((DisabledException) ex);
         }
-        
+
         ErrorResponse errorResponse = new ErrorResponse(
                 "authentication-error",
                 ex.getMessage()
@@ -83,7 +86,7 @@ public class GlobalExceptionHandler {
             ex.getRole(), 
             "registration-incomplete"
         );
-        
+
         ErrorResponseWithDetails errorResponse = new ErrorResponseWithDetails(
                 errorCode,
                 ex.getMessage(),
@@ -91,16 +94,16 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
     }
-    
+
     @ExceptionHandler(DisabledException.class)
     public ResponseEntity<ErrorResponseWithDetails> handleDisabledException(DisabledException ex) {
         String username = extractUsernameFromMessage(ex.getMessage());
         Map<String, Object> details = new HashMap<>();
         String errorCode = "user-disabled";
-        
+
         if (username != null && !username.isEmpty()) {
             Optional<User> userOpt = userRepository.findByPhoneNumber(username);
-            
+
             if (userOpt.isPresent()) {
                 User user = userOpt.get();
                 details = createRegistrationStatusDetails(
@@ -114,20 +117,20 @@ public class GlobalExceptionHandler {
         } else {
             details.put("message", "User account is disabled. Please complete registration or contact support.");
         }
-        
+
         ErrorResponseWithDetails errorResponse = new ErrorResponseWithDetails(
                 errorCode,
                 "Account disabled: Registration incomplete",
                 details
         );
-        
+
         return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
     }
 
     // ==============================
     // === Validation Handlers ===
     // ==============================
-    
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
         ErrorResponse errorResponse = new ErrorResponse(
@@ -136,7 +139,7 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
-    
+
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ErrorResponse> handleMissingParams(MissingServletRequestParameterException ex) {
         ErrorResponse errorResponse = new ErrorResponse(
@@ -145,7 +148,7 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
-    
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         ErrorResponse errorResponse = new ErrorResponse(
@@ -154,11 +157,35 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
-    
+
+    // ==============================
+    // === Location Handlers ===
+    // ==============================
+
+    @ExceptionHandler(LocationPriceAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseEntity<ErrorResponse> handleLocationPriceAlreadyExistsException(LocationPriceAlreadyExistsException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                "price-already-exist",
+                ex.getMessage()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(LocationNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<ErrorResponse> handleLocationNotFoundException(LocationNotFoundException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                ex.getCode(),
+                ex.getMessage()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
     // ==============================
     // === Fallback Handler ===
     // ==============================
-    
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         ErrorResponse errorResponse = new ErrorResponse(
@@ -167,26 +194,26 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-    
+
     // ==============================
     // === Helper Methods ===
     // ==============================
-    
+
     /**
      * Creates details map based on registration status and role
      */
     private Map<String, Object> createRegistrationStatusDetails(RegistrationStatus status, String role, String defaultErrorCode) {
         Map<String, Object> details = new HashMap<>();
         String errorCode = defaultErrorCode;
-        
+
         if (status == null) {
             details.put("nextStep", "unknown");
             return details;
         }
-        
+
         details.put("registrationStatus", status.toString());
         details.put("role", role);
-        
+
         switch (status) {
             case STEP_1_COMPLETE:
                 errorCode = "registration-incomplete-basic";
@@ -225,11 +252,11 @@ public class GlobalExceptionHandler {
                 details.put("nextStep", "unknown");
                 details.put("message", "Your account is disabled. Please contact support.");
         }
-        
+
         details.put("errorCode", errorCode);
         return details;
     }
-    
+
     /**
      * Extract username from authentication error message
      * Usually in format "User account is disabled: [username]"
@@ -238,7 +265,7 @@ public class GlobalExceptionHandler {
         if (message == null) {
             return null;
         }
-        
+
         // Check if the message contains user information
         if (message.contains("User is disabled")) {
             // For multi-part messages like "User is disabled: user@example.com"
@@ -246,7 +273,7 @@ public class GlobalExceptionHandler {
                 return message.split(":")[1].trim();
             }
         }
-        
+
         // Try to find username in the message format
         if (message.contains("@")) {
             String[] parts = message.split("\\s+");
@@ -256,10 +283,10 @@ public class GlobalExceptionHandler {
                 }
             }
         }
-        
+
         return null;
     }
-    
+
     // Inner class for detailed error responses
     public static record ErrorResponseWithDetails(String errorCode, String message, Map<String, Object> details) {
     }

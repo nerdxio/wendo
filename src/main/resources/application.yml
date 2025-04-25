@@ -2,9 +2,9 @@ spring:
   jackson:
     time-zone: UTC
   datasource:
-    url: jdbc:postgresql://localhost:5432/wendo_db
-    username: user
-    password: pass
+    url: jdbc:postgresql://ep-red-pond-a4876wu1-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require
+    username: neondb_owner
+    password: npg_iRItpCT9qc3l
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
