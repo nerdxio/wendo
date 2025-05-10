@@ -50,8 +50,8 @@ application:
 
 ##### APP Configuration #####
 app:
-  base-url: http://localhost:8080
-  upload-dir: /home/nerd/uploads
+  base-url: http://165.232.127.150:8080
+  upload-dir: /root/uploads
 
 # OpenAPI/Swagger Configuration
 springdoc:
