@@ -15,10 +15,12 @@ import app.wendo.users.models.Passenger;
 import app.wendo.users.models.User;
 import app.wendo.users.repositories.DriverRepository;
 import app.wendo.users.repositories.PassengerRepository;
+import app.wendo.wallet.services.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -28,11 +30,14 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class TripService {
-
     private final TripRepository tripRepository;
     private final DriverRepository driverRepository;
     private final PassengerRepository passengerRepository;
     private final SecurityUtils securityUtils;
+    private final WalletService walletService;
+
+    // Base fare per kilometer
+    private static final BigDecimal BASE_FARE_PER_KM = new BigDecimal("2.0");
 
     @Transactional
     public TripResponse createTrip(CreateTripRequest request) {
@@ -224,6 +229,14 @@ public class TripService {
         driver.setIsAvailable(true);
         driverRepository.save(driver);
 
+        // Calculate trip fare based on distance
+        if (trip.getDistanceKilometers() != null) {
+            BigDecimal tripFare = calculateTripFare(trip);
+
+            // Update driver's wallet
+            walletService.processTrip(trip, tripFare);
+        }
+
         return convertToTripResponse(tripRepository.save(trip));
     }
 
@@ -389,5 +402,22 @@ public class TripService {
         response.setMinutesRemainingToCancel(minutesRemainingToCancel);
 
         return response;
+    }
+
+    /**
+     * Calculate the trip fare based on distance
+     * @param trip The trip to calculate fare for
+     * @return The calculated fare
+     */
+    private BigDecimal calculateTripFare(Trip trip) {
+        if (trip.getDistanceKilometers() == null) {
+            return BigDecimal.ZERO;
+        }
+
+        // Convert distance to BigDecimal
+        BigDecimal distance = BigDecimal.valueOf(trip.getDistanceKilometers());
+
+        // Calculate fare based on distance and base fare per km
+        return distance.multiply(BASE_FARE_PER_KM);
     }
 }
