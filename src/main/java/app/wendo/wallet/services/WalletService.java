@@ -57,14 +57,14 @@ public class WalletService {
 
         // Calculate platform commission
         BigDecimal platformCommission = tripFare.multiply(PLATFORM_COMMISSION_PERCENTAGE);
-        
+
         // Calculate driver earnings
         BigDecimal driverEarnings = tripFare.subtract(platformCommission);
-        
+
         // Update wallet
         wallet.addEarnings(driverEarnings, platformCommission);
         walletRepository.save(wallet);
-        
+
         // Record driver earnings transaction
         Transaction earningsTransaction = Transaction.builder()
                 .driver(driver)
@@ -75,7 +75,7 @@ public class WalletService {
                 .trip(trip)
                 .build();
         transactionRepository.save(earningsTransaction);
-        
+
         // Record platform commission transaction
         Transaction commissionTransaction = Transaction.builder()
                 .driver(driver)
@@ -92,21 +92,21 @@ public class WalletService {
     public PaymentRequest createPaymentRequest(Long driverId, BigDecimal amount, String notes) {
         Driver driver = driverRepository.findById(driverId)
                 .orElseThrow(() -> new EntityNotFoundException("Driver not found with ID: " + driverId));
-        
+
         Wallet wallet = getOrCreateWallet(driver);
-        
+
         // Ensure amount is not greater than pending dues
         if (amount.compareTo(wallet.getPendingDues()) > 0) {
             amount = wallet.getPendingDues();
         }
-        
+
         PaymentRequest paymentRequest = PaymentRequest.builder()
                 .driver(driver)
                 .amount(amount)
                 .notes(notes)
                 .status(PaymentRequestStatus.PENDING)
                 .build();
-        
+
         return paymentRequestRepository.save(paymentRequest);
     }
 
@@ -114,19 +114,19 @@ public class WalletService {
     public PaymentRequest processPaymentRequest(Long paymentRequestId, PaymentRequestStatus newStatus) {
         PaymentRequest paymentRequest = paymentRequestRepository.findById(paymentRequestId)
                 .orElseThrow(() -> new EntityNotFoundException("Payment request not found with ID: " + paymentRequestId));
-        
+
         if (paymentRequest.getStatus() != PaymentRequestStatus.PENDING) {
             throw new IllegalStateException("Payment request is not in PENDING state");
         }
-        
+
         if (newStatus == PaymentRequestStatus.PAID) {
             paymentRequest.markAsPaid();
-            
+
             // Update wallet
             Wallet wallet = getOrCreateWallet(paymentRequest.getDriver());
             wallet.recordPayment(paymentRequest.getAmount());
             walletRepository.save(wallet);
-            
+
             // Record transaction
             Transaction transaction = Transaction.builder()
                     .driver(paymentRequest.getDriver())
@@ -140,7 +140,7 @@ public class WalletService {
         } else if (newStatus == PaymentRequestStatus.REJECTED) {
             paymentRequest.reject();
         }
-        
+
         return paymentRequestRepository.save(paymentRequest);
     }
 
@@ -187,9 +187,20 @@ public class WalletService {
         List<Wallet> walletsWithDues = walletRepository.findAll().stream()
                 .filter(wallet -> wallet.getPendingDues().compareTo(BigDecimal.ZERO) > 0)
                 .toList();
-        
+
         return walletsWithDues.stream()
                 .map(Wallet::getDriver)
+                .toList();
+    }
+
+    @Transactional
+    public List<PaymentRequest> createPaymentRequestsForAllDrivers(String notes) {
+        List<Driver> driversWithDues = getDriversWithPendingDues();
+        return driversWithDues.stream()
+                .map(driver -> {
+                    Wallet wallet = getOrCreateWallet(driver);
+                    return createPaymentRequest(driver.getId(), wallet.getPendingDues(), notes);
+                })
                 .toList();
     }
 }

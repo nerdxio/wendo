@@ -39,7 +39,7 @@ public class DriverWalletController {
         User currentUser = securityUtils.getCurrentUser();
         Driver driver = driverRepository.findByUser(currentUser)
                 .orElseThrow(() -> new EntityNotFoundException("Driver not found for current user"));
-        
+
         Wallet wallet = walletService.getOrCreateWallet(driver);
         return ResponseEntity.ok(WalletDTO.fromEntity(wallet));
     }
@@ -50,12 +50,12 @@ public class DriverWalletController {
         User currentUser = securityUtils.getCurrentUser();
         Driver driver = driverRepository.findByUser(currentUser)
                 .orElseThrow(() -> new EntityNotFoundException("Driver not found for current user"));
-        
+
         List<Transaction> transactions = walletService.getDriverTransactions(driver.getId());
         List<TransactionDTO> transactionDTOs = transactions.stream()
                 .map(TransactionDTO::fromEntity)
                 .collect(Collectors.toList());
-        
+
         return ResponseEntity.ok(transactionDTOs);
     }
 
@@ -65,10 +65,10 @@ public class DriverWalletController {
         User currentUser = securityUtils.getCurrentUser();
         Driver driver = driverRepository.findByUser(currentUser)
                 .orElseThrow(() -> new EntityNotFoundException("Driver not found for current user"));
-        
+
         Page<Transaction> transactions = walletService.getDriverTransactions(driver.getId(), pageable);
         Page<TransactionDTO> transactionDTOs = transactions.map(TransactionDTO::fromEntity);
-        
+
         return ResponseEntity.ok(transactionDTOs);
     }
 
@@ -80,10 +80,10 @@ public class DriverWalletController {
         User currentUser = securityUtils.getCurrentUser();
         Driver driver = driverRepository.findByUser(currentUser)
                 .orElseThrow(() -> new EntityNotFoundException("Driver not found for current user"));
-        
+
         Page<Transaction> transactions = walletService.getDriverTransactionsByType(driver.getId(), type, pageable);
         Page<TransactionDTO> transactionDTOs = transactions.map(TransactionDTO::fromEntity);
-        
+
         return ResponseEntity.ok(transactionDTOs);
     }
 
@@ -96,11 +96,11 @@ public class DriverWalletController {
         User currentUser = securityUtils.getCurrentUser();
         Driver driver = driverRepository.findByUser(currentUser)
                 .orElseThrow(() -> new EntityNotFoundException("Driver not found for current user"));
-        
+
         Page<Transaction> transactions = walletService.getDriverTransactionsByDateRange(
                 driver.getId(), startDate, endDate, pageable);
         Page<TransactionDTO> transactionDTOs = transactions.map(TransactionDTO::fromEntity);
-        
+
         return ResponseEntity.ok(transactionDTOs);
     }
 
@@ -110,25 +110,13 @@ public class DriverWalletController {
         User currentUser = securityUtils.getCurrentUser();
         Driver driver = driverRepository.findByUser(currentUser)
                 .orElseThrow(() -> new EntityNotFoundException("Driver not found for current user"));
-        
+
         List<PaymentRequest> paymentRequests = walletService.getDriverPaymentRequests(driver.getId());
         List<PaymentRequestDTO> paymentRequestDTOs = paymentRequests.stream()
                 .map(PaymentRequestDTO::fromEntity)
                 .collect(Collectors.toList());
-        
+
         return ResponseEntity.ok(paymentRequestDTOs);
     }
 
-    @PostMapping("/payment-requests")
-    @PreAuthorize("hasRole('DRIVER')")
-    public ResponseEntity<PaymentRequestDTO> createPaymentRequest(
-            @RequestParam BigDecimal amount,
-            @RequestParam(required = false) String notes) {
-        User currentUser = securityUtils.getCurrentUser();
-        Driver driver = driverRepository.findByUser(currentUser)
-                .orElseThrow(() -> new EntityNotFoundException("Driver not found for current user"));
-        
-        PaymentRequest paymentRequest = walletService.createPaymentRequest(driver.getId(), amount, notes);
-        return ResponseEntity.ok(PaymentRequestDTO.fromEntity(paymentRequest));
-    }
 }

@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,7 +39,7 @@ public class AdminWalletController {
         List<PaymentRequestDTO> paymentRequestDTOs = paymentRequests.stream()
                 .map(PaymentRequestDTO::fromEntity)
                 .collect(Collectors.toList());
-        
+
         return ResponseEntity.ok(paymentRequestDTOs);
     }
 
@@ -47,7 +48,7 @@ public class AdminWalletController {
     public ResponseEntity<Page<PaymentRequestDTO>> getPendingPaymentRequestsPaged(Pageable pageable) {
         Page<PaymentRequest> paymentRequests = walletService.getPendingPaymentRequests(pageable);
         Page<PaymentRequestDTO> paymentRequestDTOs = paymentRequests.map(PaymentRequestDTO::fromEntity);
-        
+
         return ResponseEntity.ok(paymentRequestDTOs);
     }
 
@@ -56,7 +57,7 @@ public class AdminWalletController {
     public ResponseEntity<Page<PaymentRequestDTO>> getPaidPaymentRequestsPaged(Pageable pageable) {
         Page<PaymentRequest> paymentRequests = walletService.getPaidPaymentRequests(pageable);
         Page<PaymentRequestDTO> paymentRequestDTOs = paymentRequests.map(PaymentRequestDTO::fromEntity);
-        
+
         return ResponseEntity.ok(paymentRequestDTOs);
     }
 
@@ -79,7 +80,21 @@ public class AdminWalletController {
                     return WalletDTO.fromEntity(wallet);
                 })
                 .collect(Collectors.toList());
-        
+
         return ResponseEntity.ok(walletDTOs);
+    }
+
+
+    @PostMapping("/payment-requests/create-for-all-drivers")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<PaymentRequestDTO>> createPaymentRequestsForAllDrivers(
+            @RequestParam(required = false) String notes) {
+        List<PaymentRequest> paymentRequests = walletService.createPaymentRequestsForAllDrivers(notes);
+
+        List<PaymentRequestDTO> paymentRequestDTOs = paymentRequests.stream()
+                .map(PaymentRequestDTO::fromEntity)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(paymentRequestDTOs);
     }
 }
