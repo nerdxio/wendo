@@ -2,7 +2,9 @@ package app.wendo.users.services;
 
 import app.wendo.security.SecurityUtils;
 import app.wendo.users.dtos.DriverInfoResponse;
+import app.wendo.users.dtos.DriverProfileUpdateRequest;
 import app.wendo.users.dtos.PassengerInfoResponse;
+import app.wendo.users.dtos.PassengerProfileUpdateRequest;
 import app.wendo.users.dtos.UserInfoResponse;
 import app.wendo.users.models.RegistrationStatus;
 import app.wendo.users.repositories.DriverRepository;
@@ -96,5 +98,69 @@ public class UserService {
 
     public boolean isRegistrationComplete() {
         return getRegistrationStatus() == RegistrationStatus.REGISTRATION_COMPLETE;
+    }
+
+    /**
+     * Updates the driver profile with the provided information
+     * @param request The profile update request
+     * @return Updated driver information
+     */
+    public DriverInfoResponse updateDriverProfile(DriverProfileUpdateRequest request) {
+        var user = securityUtils.getCurrentUser();
+
+        // Update user fields if provided
+        if (request.getFullName() != null) {
+            user.setFullName(request.getFullName());
+        }
+
+        if (request.getEmail() != null) {
+            user.setEmail(request.getEmail());
+        }
+
+        if (request.getDateOfBirth() != null) {
+            user.setDateOfBirth(request.getDateOfBirth());
+        }
+
+        if (request.getProfileImageUrl() != null) {
+            user.setProfileImageUrl(request.getProfileImageUrl());
+        }
+
+        // Save the updated user
+        userRepository.save(user);
+
+        // Return the updated driver info
+        return getDriverInfo();
+    }
+
+    /**
+     * Updates the passenger profile with the provided information
+     * @param request The profile update request
+     * @return Updated passenger information
+     */
+    public PassengerInfoResponse updatePassengerProfile(PassengerProfileUpdateRequest request) {
+        var user = securityUtils.getCurrentUser();
+
+        // Update user fields if provided
+        if (request.getFullName() != null) {
+            user.setFullName(request.getFullName());
+        }
+
+        if (request.getEmail() != null) {
+            user.setEmail(request.getEmail());
+        }
+
+        if (request.getDateOfBirth() != null) {
+            user.setDateOfBirth(request.getDateOfBirth());
+        }
+
+        if (request.getProfileImageUrl() != null) {
+            user.setProfileImageUrl(request.getProfileImageUrl());
+        }
+
+        // Save the updated user
+        userRepository.save(user);
+
+        // Return the updated passenger info
+        return getPassengerInfo();
     }
 }
